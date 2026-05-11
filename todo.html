@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的待办清单</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #a8d8ff 0%, #e8c8ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        h1 {
+            color: #4a90e2;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+
+        #taskInput {
+            flex: 2;
+            min-width: 0;
+            padding: 14px 18px;
+            border: 2px solid #e8f0fe;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #f8fbff;
+        }
+
+        #taskInput:focus {
+            border-color: #4a90e2;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1);
+        }
+
+        .custom-select {
+            position: relative;
+            min-width: 170px;
+        }
+
+        .select-trigger {
+            padding: 14px 18px;
+            border: 2px solid #e8f0fe;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            background: #f8fbff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #333;
+        }
+
+        .select-trigger:hover {
+            border-color: #4a90e2;
+        }
+
+        .select-arrow {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .select-dropdown {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            overflow: hidden;
+            display: none;
+        }
+
+        .select-dropdown.open {
+            display: block;
+        }
+
+        .select-option {
+            padding: 12px 18px;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+
+        .select-option:hover {
+            background: #f8fbff;
+        }
+
+        .select-option.low {
+            color: #69db7c;
+        }
+
+        .select-option.medium {
+            color: #ffa94d;
+        }
+
+        .select-option.high {
+            color: #ff6b6b;
+        }
+
+        #addBtn {
+            padding: 14px 24px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        #addBtn:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        #addBtn:active {
+            transform: translateY(0);
+        }
+
+        .clear-section {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-bottom: 25px;
+        }
+
+        #clearCompletedBtn, #clearAllBtn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #a8d8ff 0%, #e8c8ff 100%);
+            color: #4a4a6a;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #clearCompletedBtn:hover, #clearAllBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(168, 216, 255, 0.5);
+        }
+
+        #clearAllBtn {
+            background: linear-gradient(135deg, #ffd4d4 0%, #ffb8b8 100%);
+            color: #8b4a4a;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: linear-gradient(135deg, #e8f4ff 0%, #d4e8ff 100%);
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4a90e2;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        #todoList {
+            list-style: none;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8fbff;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            border-left: 5px solid #4a90e2;
+        }
+
+        .todo-item.priority-high {
+            border-left-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .todo-item.priority-medium {
+            border-left-color: #ffa94d;
+            background: #fffaf0;
+        }
+
+        .todo-item.priority-low {
+            border-left-color: #69db7c;
+            background: #f0fff4;
+        }
+
+        .todo-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.1);
+        }
+
+        .todo-item.completed {
+            opacity: 0.7;
+        }
+
+        .todo-checkbox {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #4a90e2;
+            border-radius: 6px;
+        }
+
+        .todo-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .priority-badge {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .priority-badge.high {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .priority-badge.medium {
+            background: #ffa94d;
+            color: white;
+        }
+
+        .priority-badge.low {
+            background: #69db7c;
+            color: white;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn, .delete-btn {
+            padding: 8px 12px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: #4a90e2;
+        }
+
+        .edit-btn:hover {
+            background: #357abd;
+            transform: scale(1.05);
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+        }
+
+        .delete-btn:hover {
+            background: #ee5a5a;
+            transform: scale(1.05);
+        }
+
+        .edit-mode {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .edit-input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 14px;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .edit-custom-select {
+            position: relative;
+            min-width: 150px;
+        }
+
+        .edit-select-trigger {
+            padding: 10px 14px;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #333;
+        }
+
+        .edit-select-dropdown {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            overflow: hidden;
+            display: none;
+        }
+
+        .edit-select-dropdown.open {
+            display: block;
+        }
+
+        .edit-select-option {
+            padding: 10px 14px;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .edit-select-option:hover {
+            background: #f8fbff;
+        }
+
+        .edit-select-option.low {
+            color: #69db7c;
+        }
+
+        .edit-select-option.medium {
+            color: #ffa94d;
+        }
+
+        .edit-select-option.high {
+            color: #ff6b6b;
+        }
+
+        .save-btn {
+            padding: 8px 14px;
+            background: #69db7c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .save-btn:hover {
+            background: #51cf66;
+        }
+
+        .cancel-btn {
+            padding: 8px 14px;
+            background: #adb5bd;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .cancel-btn:hover {
+            background: #868e96;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .empty-icon {
+            font-size: 70px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #4a90e2;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #888;
+            font-size: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .input-section {
+                flex-wrap: wrap;
+                flex-direction: column;
+            }
+
+            #taskInput, .custom-select, #addBtn {
+                width: 100%;
+            }
+
+            .custom-select {
+                min-width: auto;
+            }
+        }
+
+        @media (min-width: 601px) {
+            .input-section {
+                flex-wrap: nowrap !important;
+            }
+
+            #taskInput {
+                flex: 2;
+            }
+
+            .custom-select {
+                flex: 0 0 170px;
+            }
+
+            #addBtn {
+                flex: 0 0 auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .clear-section {
+                flex-direction: column;
+            }
+
+            #clearCompletedBtn, #clearAllBtn {
+                width: 100%;
+            }
+
+            .todo-item {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .todo-content {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .todo-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .edit-mode {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 我的待办清单</h1>
+        
+        <div class="input-section">
+            <input type="text" id="taskInput" placeholder="今天要做什么？">
+            <div class="custom-select" id="mainPrioritySelect">
+                <div class="select-trigger">
+                    <span class="select-text">🟢 低优先级</span>
+                    <span class="select-arrow">▼</span>
+                </div>
+                <div class="select-dropdown">
+                    <div class="select-option low" data-value="low">
+                        <span>🟢 低优先级</span>
+                        <span class="check-mark">✓</span>
+                    </div>
+                    <div class="select-option medium" data-value="medium">
+                        <span>🟡 中优先级</span>
+                        <span class="check-mark"></span>
+                    </div>
+                    <div class="select-option high" data-value="high">
+                        <span>🔴 高优先级</span>
+                        <span class="check-mark"></span>
+                    </div>
+                </div>
+            </div>
+            <button id="addBtn">➕ 添加任务</button>
+        </div>
+
+        <div class="clear-section">
+            <button id="clearCompletedBtn">🗑️ 清空已完成</button>
+            <button id="clearAllBtn">🧹 全部清空</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">总任务</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedCount">0</div>
+                <div class="stat-label">已完成</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="uncompletedCount">0</div>
+                <div class="stat-label">未完成</div>
+            </div>
+        </div>
+
+        <ul id="todoList"></ul>
+    </div>
+
+    <script>
+        const taskInput = document.getElementById('taskInput');
+        const addBtn = document.getElementById('addBtn');
+        const todoList = document.getElementById('todoList');
+        const totalCount = document.getElementById('totalCount');
+        const completedCount = document.getElementById('completedCount');
+        const uncompletedCount = document.getElementById('uncompletedCount');
+        const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const mainPrioritySelect = document.getElementById('mainPrioritySelect');
+
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        let editingIndex = -1;
+        let mainSelectedPriority = 'low';
+        let globalCloseHandler = null;
+        let isProcessing = false;
+
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        function updateStats() {
+            const total = todos.length;
+            const completed = todos.filter(todo => todo.completed).length;
+            const uncompleted = total - completed;
+            
+            totalCount.textContent = total;
+            completedCount.textContent = completed;
+            uncompletedCount.textContent = uncompleted;
+        }
+
+        function getPriorityText(priority) {
+            const map = { high: '高', medium: '中', low: '低' };
+            return map[priority] || '中';
+        }
+
+        function getPriorityLabel(priority) {
+            const map = { low: '🟢 低优先级', medium: '🟡 中优先级', high: '🔴 高优先级' };
+            return map[priority] || '🟢 低优先级';
+        }
+
+        function initCustomSelect(container, initialValue, onSelect) {
+            const trigger = container.querySelector('.select-trigger');
+            const dropdown = container.querySelector('.select-dropdown');
+            const textEl = container.querySelector('.select-text');
+            const options = dropdown.querySelectorAll('.select-option');
+            
+            function updateUI(selectedVal) {
+                const labels = { low: '🟢 低优先级', medium: '🟡 中优先级', high: '🔴 高优先级' };
+                textEl.textContent = labels[selectedVal];
+                
+                options.forEach(opt => {
+                    const val = opt.getAttribute('data-value');
+                    const checkMark = opt.querySelector('.check-mark');
+                    checkMark.textContent = val === selectedVal ? '✓' : '';
+                });
+            }
+            
+            updateUI(initialValue);
+            
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+            
+            options.forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const val = opt.getAttribute('data-value');
+                    updateUI(val);
+                    dropdown.classList.remove('open');
+                    if (onSelect) onSelect(val);
+                });
+            });
+            
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('open');
+            });
+            
+            dropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            
+            return { updateUI };
+        }
+
+        function renderTodos() {
+            todoList.innerHTML = '';
+            
+            if (globalCloseHandler) {
+                document.removeEventListener('click', globalCloseHandler);
+                globalCloseHandler = null;
+            }
+            
+            if (todos.length === 0) {
+                todoList.innerHTML = `
+                    <li class="empty-state">
+                        <div class="empty-icon">🎉</div>
+                        <h3>太棒了！暂无任务</h3>
+                        <p>今天没有待办事项，好好享受轻松的一天吧~</p>
+                    </li>
+                `;
+            } else {
+                todos.forEach((todo, index) => {
+                    if (editingIndex === index) {
+                        const li = document.createElement('li');
+                        li.className = `todo-item priority-${todo.priority || 'medium'}`;
+                        li.innerHTML = `
+                            <div class="edit-mode">
+                                <input type="text" class="edit-input" value="${escapeHtml(todo.text)}" id="editInput-${index}">
+                                <div class="edit-custom-select" id="editPrioritySelect-${index}">
+                                    <div class="edit-select-trigger">
+                                        <span class="edit-select-text"></span>
+                                        <span class="select-arrow">▼</span>
+                                    </div>
+                                    <div class="edit-select-dropdown">
+                                        <div class="edit-select-option low" data-value="low">
+                                            <span>🟢 低优先级</span>
+                                            <span class="check-mark">✓</span>
+                                        </div>
+                                        <div class="edit-select-option medium" data-value="medium">
+                                            <span>🟡 中优先级</span>
+                                            <span class="check-mark"></span>
+                                        </div>
+                                        <div class="edit-select-option high" data-value="high">
+                                            <span>🔴 高优先级</span>
+                                            <span class="check-mark"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="save-btn" onclick="saveEdit(${index})">保存</button>
+                                <button class="cancel-btn" onclick="cancelEdit()">取消</button>
+                            </div>
+                        `;
+                        todoList.appendChild(li);
+                        
+                        const editSelectContainer = document.getElementById(`editPrioritySelect-${index}`);
+                        const editPriority = todo.priority || 'medium';
+                        
+                        const editTrigger = editSelectContainer.querySelector('.edit-select-trigger');
+                        const editDropdown = editSelectContainer.querySelector('.edit-select-dropdown');
+                        const editTextEl = editSelectContainer.querySelector('.edit-select-text');
+                        const editOptions = editSelectContainer.querySelectorAll('.edit-select-option');
+                        
+                        let currentEditSelectedVal = editPriority;
+                        
+                        function updateEditUI(selectedVal) {
+                            const labels = { low: '🟢 低优先级', medium: '🟡 中优先级', high: '🔴 高优先级' };
+                            editTextEl.textContent = labels[selectedVal];
+                            currentEditSelectedVal = selectedVal;
+                            
+                            editOptions.forEach(opt => {
+                                const val = opt.getAttribute('data-value');
+                                const checkMark = opt.querySelector('.check-mark');
+                                if (checkMark) {
+                                    checkMark.textContent = val === selectedVal ? '✓' : '';
+                                }
+                            });
+                        }
+                        
+                        updateEditUI(editPriority);
+                        
+                        editTrigger.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            editDropdown.classList.toggle('open');
+                        });
+                        
+                        editOptions.forEach(opt => {
+                            opt.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                const val = opt.getAttribute('data-value');
+                                updateEditUI(val);
+                                editDropdown.classList.remove('open');
+                            });
+                        });
+                        
+                        globalCloseHandler = (event) => {
+                            if (editDropdown) {
+                                editDropdown.classList.remove('open');
+                            }
+                        };
+                        document.addEventListener('click', globalCloseHandler);
+                        
+                        setTimeout(() => {
+                            const editInput = document.getElementById(`editInput-${index}`);
+                            if (editInput) {
+                                editInput.focus();
+                                editInput.select();
+                            }
+                        }, 0);
+                        
+                        window.__currentEditData = window.__currentEditData || {};
+                        window.__currentEditData.selectedVal = editPriority;
+                        window.__currentEditData.index = index;
+                        
+                        editOptions.forEach(opt => {
+                            opt.addEventListener('click', () => {
+                                const val = opt.getAttribute('data-value');
+                                window.__currentEditData.selectedVal = val;
+                            });
+                        });
+                    } else {
+                        const li = document.createElement('li');
+                        li.className = `todo-item priority-${todo.priority || 'medium'} ${todo.completed ? 'completed' : ''}`;
+                        
+                        li.innerHTML = `
+                            <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''}>
+                            <div class="todo-content">
+                                <span class="todo-text">${escapeHtml(todo.text)}</span>
+                                <span class="priority-badge ${todo.priority || 'medium'}">${getPriorityText(todo.priority)}</span>
+                            </div>
+                            <div class="todo-actions">
+                                <button class="edit-btn">编辑</button>
+                                <button class="delete-btn">删除</button>
+                            </div>
+                        `;
+                        
+                        const checkbox = li.querySelector('.todo-checkbox');
+                        const editBtn = li.querySelector('.edit-btn');
+                        const deleteBtn = li.querySelector('.delete-btn');
+                        
+                        checkbox.addEventListener('change', () => toggleTodo(index));
+                        editBtn.addEventListener('click', () => startEdit(index));
+                        deleteBtn.addEventListener('click', () => deleteTodo(index));
+                        
+                        todoList.appendChild(li);
+                    }
+                });
+            }
+            
+            updateStats();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function addTodo() {
+            if (isProcessing) return;
+            
+            const text = taskInput.value.trim();
+            if (text === '') return;
+            
+            isProcessing = true;
+            
+            try {
+                todos.push({
+                    text: text,
+                    completed: false,
+                    priority: mainSelectedPriority
+                });
+                
+                taskInput.value = '';
+                saveTodos();
+                renderTodos();
+            } finally {
+                setTimeout(() => { isProcessing = false; }, 300);
+            }
+        }
+
+        function toggleTodo(index) {
+            if (isProcessing || index < 0 || index >= todos.length) return;
+            isProcessing = true;
+            
+            try {
+                todos[index].completed = !todos[index].completed;
+                saveTodos();
+                renderTodos();
+            } finally {
+                setTimeout(() => { isProcessing = false; }, 200);
+            }
+        }
+
+        function deleteTodo(index) {
+            if (isProcessing || index < 0 || index >= todos.length) return;
+            isProcessing = true;
+            
+            try {
+                todos.splice(index, 1);
+                saveTodos();
+                renderTodos();
+            } finally {
+                setTimeout(() => { isProcessing = false; }, 200);
+            }
+        }
+
+        function startEdit(index) {
+            editingIndex = index;
+            renderTodos();
+        }
+
+        function saveEdit(index) {
+            const editInput = document.getElementById(`editInput-${index}`);
+            if (!editInput) return;
+            
+            const newText = editInput.value.trim();
+            if (newText === '') return;
+            
+            let selectedVal = todos[index].priority || 'medium';
+            if (window.__currentEditData && window.__currentEditData.index === index) {
+                selectedVal = window.__currentEditData.selectedVal || selectedVal;
+            }
+            
+            todos[index].text = newText;
+            todos[index].priority = selectedVal;
+            editingIndex = -1;
+            saveTodos();
+            renderTodos();
+        }
+
+        function cancelEdit() {
+            editingIndex = -1;
+            renderTodos();
+        }
+
+        function clearCompleted() {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            try {
+                todos = todos.filter(todo => !todo.completed);
+                saveTodos();
+                renderTodos();
+            } finally {
+                setTimeout(() => { isProcessing = false; }, 300);
+            }
+        }
+
+        function clearAll() {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            const confirmed = window.confirm('⚠️  确定要清空所有任务吗？\n\n此操作会删除全部待办事项，且无法撤销！');
+            if (confirmed === true) {
+                try {
+                    todos = [];
+                    saveTodos();
+                    renderTodos();
+                } finally {
+                    setTimeout(() => { isProcessing = false; }, 300);
+                }
+            } else {
+                isProcessing = false;
+            }
+        }
+
+        addBtn.addEventListener('click', addTodo);
+        clearCompletedBtn.addEventListener('click', clearCompleted);
+        clearAllBtn.addEventListener('click', clearAll);
+        
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && editingIndex === -1) {
+                addTodo();
+            }
+        });
+
+        initCustomSelect(mainPrioritySelect, 'low', (val) => {
+            mainSelectedPriority = val;
+        });
+
+        renderTodos();
+    </script>
+</body>
+</html>
